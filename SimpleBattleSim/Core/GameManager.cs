@@ -23,6 +23,20 @@ public class GameManager
         if (_teamCount <= 0) throw new TeamCountLessThanZeroException();
     }
 
+    private void PrintTeamInfo()
+    {
+        _logger.Log("=== TEAMS ===\n");
+        foreach (Team t in _teams)
+        {
+            _logger.Log($" - Team {t.Name}\n");
+            foreach (Player p in t.Players)
+            {
+                _logger.Log($"  - {p.Character}\n");
+                _logger.Log($"   - Initiative: {p.Character.Initiative}\n");
+            }
+        }
+    }
+
     // Loop does an iteration of the state machine and returns false if the state is final.
     public bool Loop()
     {
@@ -52,16 +66,7 @@ public class GameManager
         {
             _state = GameState.Gameplay;
 
-            _logger.Log("=== TEAMS ===\n");
-            foreach (Team t in _teams)
-            {
-                _logger.Log($" - Team {t.Name}\n");
-                foreach (Player p in t.Players)
-                {
-                    _logger.Log($"  - {p.Character}\n");
-                    _logger.Log($"   - Initiative: {p.Character.Initiative}\n");
-                }
-            }
+            PrintTeamInfo();
             
             return true;
         }
@@ -128,8 +133,19 @@ public class GameManager
     // GameplayLoop makes players attack eachother until a team wins.
     private bool GameplayLoop()
     {
-        _ = _input.GetInput("[ENTER] to continue");
-        Console.WriteLine();
+        while (true)
+        {
+            string opt = _input.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses ");
+            Console.WriteLine();
+            if (opt.Trim().Equals("s", StringComparison.CurrentCultureIgnoreCase))
+            {
+                PrintTeamInfo();
+            }
+            else
+            {
+                break;
+            }
+        }
         if (_sortedPlayers is null)
         {
             _sortedPlayers = new List<Player>();
