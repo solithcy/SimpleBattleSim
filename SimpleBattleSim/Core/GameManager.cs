@@ -9,6 +9,10 @@ public class GameManager
     private GameState _state;
     private List<Team> _teams = [];
     private int _teamCount;
+    private int _turnIndex = 0;
+    private int? _winningTeam;
+    private List<Player>? _sortedPlayers = null;
+    private LoggingService _logger = LoggingService.Instance;
 
     public GameManager(int teamCount)
     {
@@ -23,9 +27,14 @@ public class GameManager
         switch (_state)
         {
             case GameState.TeamCreation:
-                return TeamCreationLoop() && Loop();
+                return TeamCreationLoop();
             case GameState.Gameplay:
-                return GameplayLoop() && Loop();
+                return GameplayLoop();
+            case GameState.GameOver:
+                _logger.Log($"\n=== Team {_teams[_winningTeam ?? 0].Name} has won!! ===");
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
         return false;
@@ -33,7 +42,7 @@ public class GameManager
 
     // TeamCreationLoop takes user input until all teams are ready to battle. If something goes wrong, returns false to
     // exit state machine loop. Otherwise, returns true. Sets state to GameState.Gameplay when teams are ready.
-    public bool TeamCreationLoop()
+    private bool TeamCreationLoop()
     {
         int teamIdx = Math.Max(0, _teams.Count - 1);
         if (_teams.Count >= teamIdx+1 && _teams[teamIdx].Players.Count == 3) teamIdx++;
@@ -41,14 +50,14 @@ public class GameManager
         {
             _state = GameState.Gameplay;
 
-            Console.WriteLine("=== TEAMS ===");
+            _logger.Log("=== TEAMS ===\n");
             foreach (Team t in _teams)
             {
-                Console.WriteLine($" - Team {t.Name}");
+                _logger.Log($" - Team {t.Name}\n");
                 foreach (Player p in t.Players)
                 {
-                    Console.WriteLine($"  - {p.Character}");
-                    Console.WriteLine($"   - Initiative: {p.Character.Initiative}");
+                    _logger.Log($"  - {p.Character}\n");
+                    _logger.Log($"   - Initiative: {p.Character.Initiative}\n");
                 }
             }
             
@@ -74,7 +83,7 @@ public class GameManager
             team.Name = "";
             while (Strings.Trim(team.Name) == "")
             {
-                team.Name = InputService.GetInput($"Please enter a team name for team {team.Idx}: ");
+                team.Name = InputService.GetInput($"Please enter a team name for team {team.Idx+1}: ");
             }
         }
         else
@@ -108,14 +117,59 @@ public class GameManager
 
             Player p = new Player(character, teamIdx);
             team.Players.Add(p);
+            if(team.Players.Count == 3) Console.WriteLine();
         }
 
         return true;
     }
 
-    public bool GameplayLoop()
+    // GameplayLoop makes players attack eachother until a team wins.
+    private bool GameplayLoop()
     {
-        return false;
+        _ = InputService.GetInput("[ENTER] to continue");
+        Console.WriteLine();
+        if (_sortedPlayers is null)
+        {
+            _sortedPlayers = new List<Player>();
+            foreach (var tp in _teams.SelectMany(t => t.Players))
+            {
+                _sortedPlayers.Add(tp);
+            }
+
+            _sortedPlayers.Sort(((p1, p2) => 
+                p1.Character.Initiative < p2.Character.Initiative ? 1 : -1
+            ));
+        }
+
+        Player p = _sortedPlayers[_turnIndex % _sortedPlayers.Count];
+        Team playerTeam = _teams.Find(t => t.Idx == p.TeamIdx)!;
+        List<Player> targets = _teams.Where(t=>t.Idx != p.TeamIdx).SelectMany(t => t.Players).ToList();
+        Player? target = p.GetTarget(targets);
+        if (target is null)
+        {
+            _winningTeam = playerTeam.Idx;
+            _state = GameState.GameOver;
+            return true;
+        }
+
+        _logger.Log($"[Team {playerTeam.Name}] ");
+        int dmg = p.Character.Attack();
+        string msg = p.Character.AttackMessage(target.Character, dmg);
+        p.Character.ClassEffects();
+        target.Character.Health -= dmg;
+        _logger.Log(msg);
+
+        foreach(Player player_ in new[]{target, p})
+            if (player_.Character.Health <= 0)
+            {
+                Team targetTeam = _teams.Find(t => t.Idx == player_.TeamIdx)!;
+                targetTeam.Players.Remove(player_);
+                _logger.Log($"{player_.Character} dies.. Team {targetTeam.Name} has {targetTeam.Players.Count} players left\n");
+                _sortedPlayers.Remove(player_);
+            }
+
+        _turnIndex++;
+        return true;
     }
 }
 

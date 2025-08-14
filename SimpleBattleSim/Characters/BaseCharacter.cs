@@ -13,7 +13,7 @@ public abstract class BaseCharacter
     {
         if (name is null or "")
         {
-            Name = NameService.GetService().RandomName(type);
+            Name = NameService.GetService().RandomName(type.ToLower());
             Name = Name[0].ToString().ToUpper() + Name[1..];
         }
         else
@@ -28,7 +28,7 @@ public abstract class BaseCharacter
 
     public override string ToString()
     {
-        return $"\e[0;96m{Name} the {Type}\e[0;35m (\e[0;92m{Math.Max(Health, 0)} HP\e[0;35m)\e[0;97m";
+        return $"\e[0;96m{Name} the {Type}\e[0;35m (\e[0;92m{Math.Max(Health, 0)} HP\e[0;35m)";
     }
 
     public int Rand(int min, int max)
@@ -43,6 +43,10 @@ public abstract class BaseCharacter
     
     public virtual string AttackMessage(BaseCharacter target, int dmg)
     {
-        return $"{this} attacks {target}, dealing \e[0;92m{dmg} damage\e[0;35m and leaving them with \e[0;92m{Math.Max(target.Health-dmg, 0)} HP\e[0;35m.";
+        return $"{this} attacks {target}, dealing \e[0;92m{dmg} damage\e[0;35m and leaving them with \e[0;92m{Math.Max(target.Health-dmg, 0)} HP\e[0;35m.\n";
+    }
+
+    public virtual void ClassEffects()
+    {
     }
 }
