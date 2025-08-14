@@ -192,7 +192,8 @@ public class Tests
         _manager = new GameManager(2, mockInput.Object);
         
         // loop should only need to be called 8 times, so this won't test any gameloop code.
-        for (int i = 0; i < 8; i++)
+        // the 9th call will set _state to GameState.Gameplay
+        for (int i = 0; i < 9; i++)
         {
             if(!_manager.Loop()) break;
         }
@@ -209,5 +210,10 @@ public class Tests
                 Assert.That(p.Character.Type, Is.EqualTo("Cleric"));
             }
         }
+
+        var state = _manager.GetType()
+            .GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(_manager)!;
+        Assert.That(state, Is.EqualTo(GameState.Gameplay));
     }
 }
