@@ -57,4 +57,5 @@ This project deviates from the [brief](./Brief.md) in a few ways.
    - **LowestHealth:** Attacks the lowest health enemy
    - **HighestHealth:** Attacks the highest health enemy
    - **Random:** Attacks a random enemy
+ - Attack is random every turn and not decided upon class instantiation. In my opinion this makes fights more balanced and fair.
  
