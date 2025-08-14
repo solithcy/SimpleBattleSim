@@ -46,7 +46,7 @@ To run the tests, from the project root run:
 $ dotnet test # no need to cd into Testing
 ```
 
-This project has 93% test coverage.
+This project has 90% test coverage.
 
 ## Assumptions
 This project deviates from the [brief](./Brief.md) in a few ways.
