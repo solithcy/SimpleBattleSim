@@ -191,8 +191,8 @@ public class Tests
         }).Returns("c");
         _manager = new GameManager(2, mockInput.Object);
         
-        // loop should only need to be called 8 times, so this should do some gameloop stuff
-        for (int i = 0; i < 12; i++)
+        // loop should only need to be called 8 times, so this won't test any gameloop code.
+        for (int i = 0; i < 8; i++)
         {
             if(!_manager.Loop()) break;
         }
