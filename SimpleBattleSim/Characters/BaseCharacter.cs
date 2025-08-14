@@ -24,8 +24,8 @@ public abstract class BaseCharacter
 
         Type = type;
         _rng = rng;
-        Initiative = Rand(1, 10);
-        Health = Rand(1, 10);
+        Initiative = Rand(1, 11);
+        Health = Rand(1, 11);
     }
 
     public override string ToString()
@@ -40,7 +40,7 @@ public abstract class BaseCharacter
 
     public virtual int Attack()
     {
-        return Rand(1, 10);
+        return Rand(1, 11);
     }
     
     public virtual string AttackMessage(BaseCharacter target, int dmg)
