@@ -11,16 +11,21 @@ internal class TestData
     public List<Player> UnorderedPlayerList;
     public List<Player> OrderedPlayerList;
 
-    public TestData()
+    public TestData(bool defaultRandomBehaviour)
     {
+        var realRng = new RandomService();
         var mockRng = new Mock<RandomService>();
-        mockRng.SetupSequence(rng => rng.Next(1, 10))
-            .Returns(2) //   p1 initiative
-            .Returns(2) //  p1 health
-            .Returns(10) //  p2 initiative
-            .Returns(10) //  p2 health
-            .Returns(5) //   p3 initiative
-            .Returns(2); // p3 health
+        int rngCallIdx = 0;
+        mockRng.Setup(rng => rng.Next(1, 10)).Returns(() =>
+        {
+            // p1 initiative, p1 health, p2 initiative, p2 health, p3 initiative, p3 health
+            int[] overrides = [2, 2, 10, 10, 5, 2];
+            if (rngCallIdx < overrides.Length)
+            {
+                return overrides[rngCallIdx++];
+            };
+            return defaultRandomBehaviour ? realRng.Next(1, 10) : 0;
+        });
         var targetingTypesRng = new Mock<RandomService>();
         targetingTypesRng.SetupSequence(rng => rng.Next(0, 3))
             .Returns(0) //  LowestHealth
@@ -39,12 +44,39 @@ internal class TestData
 
 public class Tests
 {
-    private TestData _data = new TestData();
+    private TestData _data;
     private GameManager _manager;
+
+    private void SetupGameplayLoopMocks()
+    {
+        var mockInput = new Mock<InputService>();
+        mockInput.Setup(i => i.GetInput("[ENTER] to continue")).Returns("");
+        _manager = new GameManager(2, mockInput.Object);
+
+        _manager.GetType().GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(_manager, new List<Team>
+            {
+                new()
+                {
+                    Idx = 0,
+                    Name = "",
+                    Players = [_data.UnorderedPlayerList[0], _data.UnorderedPlayerList[2]],
+                },
+                new()
+                {
+                    Idx = 1,
+                    Name = "",
+                    Players = [_data.UnorderedPlayerList[1]],
+                }
+            });
+        _manager.GetType().GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(_manager, GameState.Gameplay);
+    }
 
     [SetUp]
     public void Setup()
     {
+        _data = new TestData(false);
         _manager = new GameManager(2, new InputService());
     }
 
@@ -80,40 +112,9 @@ public class Tests
     }
 
     [Test]
-    public void Check_That_GameplayLoop_Correctly_Sorts_Players()
-    {
-        var mockInput = new Mock<InputService>();
-        mockInput.Setup(i => i.GetInput("[ENTER] to continue")).Returns("");
-        _manager = new GameManager(2, mockInput.Object);
-
-        _manager.GetType().GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .SetValue(_manager, new List<Team>
-            {
-                new()
-                {
-                    Idx = 0,
-                    Name = "",
-                    Players = [_data.UnorderedPlayerList[0], _data.UnorderedPlayerList[2]],
-                },
-                new()
-                {
-                    Idx = 1,
-                    Name = "",
-                    Players = [_data.UnorderedPlayerList[1]],
-                }
-            });
-        _manager.GetType().GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .SetValue(_manager, GameState.Gameplay);
-        _manager.Loop();
-        var sortedPlayers = _manager.GetType()
-            .GetField("_sortedPlayers", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(_manager);
-        Assert.That(sortedPlayers, Is.EquivalentTo(_data.OrderedPlayerList));
-    }
-
-    [Test]
     public void Check_That_TargetingStrategies_Target_Correctly()
     {
+        _data = new TestData(true);
         // player 1 is of strat LowestHealth, and so should target p3 as it has the lowest health
         Assert.That(_data.UnorderedPlayerList[0].GetTarget(
                 new List<Player>
@@ -145,5 +146,31 @@ public class Tests
             );
         }
         Assert.That(res.Distinct().Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Check_That_GameplayLoop_Correctly_Sorts_Players()
+    {
+        SetupGameplayLoopMocks();
+        _manager.Loop();
+        var sortedPlayers = _manager.GetType()
+            .GetField("_sortedPlayers", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(_manager);
+        Assert.That(sortedPlayers, Is.EquivalentTo(_data.OrderedPlayerList));
+    }
+
+    [Test]
+    public void Check_That_GameplayLoop_Eventually_Resolves()
+    {
+        _data = new TestData(true);
+        SetupGameplayLoopMocks();
+        for (int i = 0; i < 100; i++)
+        {
+            if (!_manager.Loop())
+            {
+                return;
+            }
+        }
+        Assert.Fail();
     }
 }
