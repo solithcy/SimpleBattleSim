@@ -23,7 +23,9 @@ internal class TestData
             if (rngCallIdx < overrides.Length)
             {
                 return overrides[rngCallIdx++];
-            };
+            }
+
+            ;
             return defaultRandomBehaviour ? realRng.Next(1, 10) : 0;
         });
         var targetingTypesRng = new Mock<RandomService>();
@@ -145,6 +147,7 @@ public class Tests
                     })!
             );
         }
+
         Assert.That(res.Distinct().Count(), Is.EqualTo(2));
     }
 
@@ -171,6 +174,40 @@ public class Tests
                 return;
             }
         }
+
         Assert.Fail();
+    }
+
+    [Test]
+    public void Check_That_TeamCreationLoop_Calls_InputService()
+    {
+        var mockInput = new Mock<InputService>(); 
+        int calls = 0;
+        // this will set team names to c and all characters to clerics
+        mockInput.Setup(i => i.GetInput(It.IsAny<string>())).Callback((string s) =>
+        {
+            // we do it this way as it's difficult to determine how much has been called during teamcreation vs gameloop
+            if (s.Contains("team name") || s.Contains("character")) calls++;
+        }).Returns("c");
+        _manager = new GameManager(2, mockInput.Object);
+        
+        // loop should only need to be called 8 times, so this should do some gameloop stuff
+        for (int i = 0; i < 12; i++)
+        {
+            if(!_manager.Loop()) break;
+        }
+
+        Assert.That(calls, Is.EqualTo(8));
+        var teams = (List<Team>)_manager.GetType()
+            .GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(_manager)!;
+        foreach (Team t in teams)
+        {
+            Assert.That(t.Name, Is.EqualTo("c"));
+            foreach (Player p in t.Players)
+            {
+                Assert.That(p.Character.Type, Is.EqualTo("Cleric"));
+            }
+        }
     }
 }
