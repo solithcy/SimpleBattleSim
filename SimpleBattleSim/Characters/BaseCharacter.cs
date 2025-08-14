@@ -33,7 +33,7 @@ public abstract class BaseCharacter
 
     public int Rand(int min, int max)
     {
-        return Random.Shared.Next(max) + min;
+        return Random.Shared.Next(min, max);
     }
 
     public virtual int Attack()
