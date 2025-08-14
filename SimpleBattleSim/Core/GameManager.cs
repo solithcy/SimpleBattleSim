@@ -171,6 +171,7 @@ public class GameManager
             }
 
         _turnIndex++;
+        if (_turnIndex >= _sortedPlayers.Count) _turnIndex = 0; 
         return true;
     }
 }
