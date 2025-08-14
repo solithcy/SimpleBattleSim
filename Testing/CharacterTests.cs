@@ -1,4 +1,6 @@
-﻿namespace Testing;
+﻿using SimpleBattleSim.Characters;
+
+namespace Testing;
 
 public class Tests
 {
@@ -8,8 +10,14 @@ public class Tests
     }
 
     [Test]
-    public void Test1()
+    public void Check_That_WarriorHealth_Is_Higher()
     {
-        Assert.Pass();
+        List<int> healths = [];
+        for (int i = 0; i < 100; i++)
+        {
+            var w = new Warrior(null);
+            healths.Add(w.Health);
+        }
+        Assert.That(healths.Max(), Is.GreaterThan(10));
     }
 }

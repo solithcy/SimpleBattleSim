@@ -5,9 +5,9 @@ namespace SimpleBattleSim.Services;
 
 public struct Names
 {
-    public readonly List<string> Cleric;
-    public readonly List<string> Warrior;
-    public readonly List<string> Wizard;
+    public List<string> Cleric {get; init;  }
+    public List<string> Warrior {get; init;  }
+    public List<string> Wizard {get; init;  }
 }
 
 public class NameService
@@ -21,7 +21,10 @@ public class NameService
         using StreamReader streamReader = new StreamReader(stream!);
         string serialised = streamReader.ReadToEnd();
         
-        _names = JsonSerializer.Deserialize<Names>(serialised);
+        _names = JsonSerializer.Deserialize<Names>(serialised, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
     }
     
     public static NameService GetService()
@@ -34,8 +37,8 @@ public class NameService
         var names = type switch
         {
             "cleric" => _names.Cleric,
-            "warrior" => _names.Cleric,
-            "wizard" => _names.Cleric,
+            "warrior" => _names.Warrior,
+            "wizard" => _names.Wizard,
             _ => throw new NoNamesForClassException()
         };
 

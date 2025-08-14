@@ -20,4 +20,8 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\SimpleBattleSim\SimpleBattleSim.csproj" />
+    </ItemGroup>
+
 </Project>

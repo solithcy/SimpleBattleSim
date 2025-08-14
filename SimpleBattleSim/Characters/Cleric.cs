@@ -2,7 +2,7 @@
 
 public class Cleric : BaseCharacter
 {
-    public Cleric(string name) : base(name, "cleric")
+    public Cleric(string? name) : base(name, "cleric")
     {
         
     }
