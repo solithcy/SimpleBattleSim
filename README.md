@@ -49,7 +49,7 @@ $ dotnet test # no need to cd into Testing
 This project has 93% test coverage.
 
 ## Assumptions
-This project deviates from the [brief](./Brief.md) in a couple of ways.
+This project deviates from the [brief](./Brief.md) in a few ways.
 
  - Fighters/Warriors are named Warriors. The name seemed to be interchangeable in the brief.
  - Turn order is decided by initiative.
