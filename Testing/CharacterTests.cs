@@ -171,6 +171,10 @@ public class Tests
         {
             if (!_manager.Loop())
             {
+                var state = _manager.GetType()
+                    .GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
+                    .GetValue(_manager)!;
+                Assert.That(state, Is.EqualTo(GameState.GameOver));
                 return;
             }
         }
