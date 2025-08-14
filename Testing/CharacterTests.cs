@@ -186,13 +186,26 @@ public class Tests
     public void Check_That_TeamCreationLoop_Calls_InputService()
     {
         var mockInput = new Mock<InputService>(); 
-        int calls = 0;
-        // this will set team names to c and all characters to clerics
+        int calls = -1;
         mockInput.Setup(i => i.GetInput(It.IsAny<string>())).Callback((string s) =>
         {
             // we do it this way as it's difficult to determine how much has been called during teamcreation vs gameloop
             if (s.Contains("team name") || s.Contains("character")) calls++;
-        }).Returns("c");
+        }).Returns(() =>
+        {
+            return calls switch
+            {
+                0 => "team1", //  team one name
+                1 => "cleric", // full names
+                2 => "wizard",
+                3 => "warrior",
+                4 => "team2", //  team 2 name
+                5 => "c", //      shortened names
+                6 => "wi",
+                7 => "wa",
+                _ => "",
+            };
+        });
         _manager = new GameManager(2, mockInput.Object);
         
         // loop should only need to be called 8 times, so this won't test any gameloop code.
@@ -202,17 +215,19 @@ public class Tests
             if(!_manager.Loop()) break;
         }
 
-        Assert.That(calls, Is.EqualTo(8));
+        Assert.That(calls, Is.EqualTo(7));
         var teams = (List<Team>)_manager.GetType()
             .GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
             .GetValue(_manager)!;
         foreach (Team t in teams)
         {
-            Assert.That(t.Name, Is.EqualTo("c"));
-            foreach (Player p in t.Players)
+            Assert.Multiple(() =>
             {
-                Assert.That(p.Character.Type, Is.EqualTo("Cleric"));
-            }
+                Assert.That(t.Name!, Does.StartWith("team"));
+                Assert.That(t.Players[0].Character.Type, Is.EqualTo("Cleric"));
+                Assert.That(t.Players[1].Character.Type, Is.EqualTo("Wizard"));
+                Assert.That(t.Players[2].Character.Type, Is.EqualTo("Warrior"));
+            });
         }
 
         var state = _manager.GetType()
