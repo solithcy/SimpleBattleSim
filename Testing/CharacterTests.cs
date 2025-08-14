@@ -1,86 +1,12 @@
-﻿using System.Reflection;
-using Moq;
-using SimpleBattleSim.Characters;
+﻿using SimpleBattleSim.Characters;
 using SimpleBattleSim.Core;
 using SimpleBattleSim.Services;
 
 namespace Testing;
 
-internal class TestData
+public class CharacterTests
 {
-    public List<Player> UnorderedPlayerList;
-    public List<Player> OrderedPlayerList;
-
-    public TestData(bool defaultRandomBehaviour)
-    {
-        var realRng = new RandomService();
-        var mockRng = new Mock<RandomService>();
-        int rngCallIdx = 0;
-        mockRng.Setup(rng => rng.Next(1, 10)).Returns(() =>
-        {
-            // p1 initiative, p1 health, p2 initiative, p2 health, p3 initiative, p3 health
-            int[] overrides = [2, 2, 10, 10, 5, 2];
-            if (rngCallIdx < overrides.Length)
-            {
-                return overrides[rngCallIdx++];
-            }
-
-            ;
-            return defaultRandomBehaviour ? realRng.Next(1, 10) : 0;
-        });
-        var targetingTypesRng = new Mock<RandomService>();
-        targetingTypesRng.SetupSequence(rng => rng.Next(0, 3))
-            .Returns(0) //  LowestHealth
-            .Returns(1) //  HighestHealth
-            .Returns(2) //  Random
-            .CallBase();
-        targetingTypesRng.Setup(rng => rng.Next(0, 2)).CallBase(); // setting up Random targeting to actually b random
-        var p1 = new Player(new Cleric(null, mockRng.Object), 0, targetingTypesRng.Object);
-        var p2 = new Player(new Cleric(null, mockRng.Object), 1, targetingTypesRng.Object);
-        var p3 = new Player(new Cleric(null, mockRng.Object), 0, targetingTypesRng.Object);
-
-        UnorderedPlayerList = [p1, p2, p3];
-        OrderedPlayerList = [p2, p3, p1];
-    }
-}
-
-public class Tests
-{
-    private TestData _data;
-    private GameManager _manager;
-
-    private void SetupGameplayLoopMocks()
-    {
-        var mockInput = new Mock<InputService>();
-        mockInput.Setup(i => i.GetInput("[ENTER] to continue")).Returns("");
-        _manager = new GameManager(2, mockInput.Object);
-
-        _manager.GetType().GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .SetValue(_manager, new List<Team>
-            {
-                new()
-                {
-                    Idx = 0,
-                    Name = "",
-                    Players = [_data.UnorderedPlayerList[0], _data.UnorderedPlayerList[2]],
-                },
-                new()
-                {
-                    Idx = 1,
-                    Name = "",
-                    Players = [_data.UnorderedPlayerList[1]],
-                }
-            });
-        _manager.GetType().GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .SetValue(_manager, GameState.Gameplay);
-    }
-
-    [SetUp]
-    public void Setup()
-    {
-        _data = new TestData(false);
-        _manager = new GameManager(2, new InputService());
-    }
+    private TestData? _data;
 
     [Test]
     public void Check_That_WarriorHealth_Is_Higher()
@@ -112,7 +38,7 @@ public class Tests
         c.ClassEffects();
         Assert.That(c.Health, Is.EqualTo(health + 1));
     }
-
+    
     [Test]
     public void Check_That_TargetingStrategies_Target_Correctly()
     {
@@ -149,90 +75,5 @@ public class Tests
         }
 
         Assert.That(res.Distinct().Count(), Is.EqualTo(2));
-    }
-
-    [Test]
-    public void Check_That_GameplayLoop_Correctly_Sorts_Players()
-    {
-        SetupGameplayLoopMocks();
-        _manager.Loop();
-        var sortedPlayers = _manager.GetType()
-            .GetField("_sortedPlayers", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(_manager);
-        Assert.That(sortedPlayers, Is.EquivalentTo(_data.OrderedPlayerList));
-    }
-
-    [Test]
-    public void Check_That_GameplayLoop_Eventually_Resolves()
-    {
-        _data = new TestData(true);
-        SetupGameplayLoopMocks();
-        for (int i = 0; i < 100; i++)
-        {
-            if (!_manager.Loop())
-            {
-                var state = _manager.GetType()
-                    .GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
-                    .GetValue(_manager)!;
-                Assert.That(state, Is.EqualTo(GameState.GameOver));
-                return;
-            }
-        }
-
-        Assert.Fail();
-    }
-
-    [Test]
-    public void Check_That_TeamCreationLoop_Calls_InputService()
-    {
-        var mockInput = new Mock<InputService>(); 
-        int calls = -1;
-        mockInput.Setup(i => i.GetInput(It.IsAny<string>())).Callback((string s) =>
-        {
-            // we do it this way as it's difficult to determine how much has been called during teamcreation vs gameloop
-            if (s.Contains("team name") || s.Contains("character")) calls++;
-        }).Returns(() =>
-        {
-            return calls switch
-            {
-                0 => "team1", //  team one name
-                1 => "cleric", // full names
-                2 => "wizard",
-                3 => "warrior",
-                4 => "team2", //  team 2 name
-                5 => "c", //      shortened names
-                6 => "wi",
-                7 => "wa",
-                _ => "",
-            };
-        });
-        _manager = new GameManager(2, mockInput.Object);
-        
-        // loop should only need to be called 8 times, so this won't test any gameloop code.
-        // the 9th call will set _state to GameState.Gameplay
-        for (int i = 0; i < 9; i++)
-        {
-            if(!_manager.Loop()) break;
-        }
-
-        Assert.That(calls, Is.EqualTo(7));
-        var teams = (List<Team>)_manager.GetType()
-            .GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(_manager)!;
-        foreach (Team t in teams)
-        {
-            Assert.Multiple(() =>
-            {
-                Assert.That(t.Name!, Does.StartWith("team"));
-                Assert.That(t.Players[0].Character.Type, Is.EqualTo("Cleric"));
-                Assert.That(t.Players[1].Character.Type, Is.EqualTo("Wizard"));
-                Assert.That(t.Players[2].Character.Type, Is.EqualTo("Warrior"));
-            });
-        }
-
-        var state = _manager.GetType()
-            .GetField("_state", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(_manager)!;
-        Assert.That(state, Is.EqualTo(GameState.Gameplay));
     }
 }
