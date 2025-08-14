@@ -2,7 +2,7 @@
 
 public class Wizard : BaseCharacter
 {
-    public Wizard(string? name) : base(name, "wizard")
+    public Wizard(string? name) : base(name, "Wizard")
     {
         
     }

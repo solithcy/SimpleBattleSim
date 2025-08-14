@@ -14,6 +14,7 @@ public abstract class BaseCharacter
         if (name is null or "")
         {
             Name = NameService.GetService().RandomName(type);
+            Name = Name[0].ToString().ToUpper() + Name[1..];
         }
         else
         {
@@ -27,7 +28,7 @@ public abstract class BaseCharacter
 
     public override string ToString()
     {
-        return $"\e[0;96m{Name} the {Type}\e[0;35m (\e[0;92m{Math.Max(Health, 0)} HP\e[0;35m)";
+        return $"\e[0;96m{Name} the {Type}\e[0;35m (\e[0;92m{Math.Max(Health, 0)} HP\e[0;35m)\e[0;97m";
     }
 
     public int Rand(int min, int max)

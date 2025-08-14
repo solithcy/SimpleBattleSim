@@ -1,3 +1,11 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using SimpleBattleSim.Core;
 
-Console.WriteLine("Hello, World!");
+class Program
+{
+    public static void Main(string[] args)
+    {
+        var game = new GameManager(2);
+        while (game.Loop()) { }
+        
+    }
+}
