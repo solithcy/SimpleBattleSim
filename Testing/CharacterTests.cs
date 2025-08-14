@@ -1,4 +1,5 @@
-﻿using SimpleBattleSim.Characters;
+﻿using Moq;
+using SimpleBattleSim.Characters;
 using SimpleBattleSim.Core;
 using SimpleBattleSim.Services;
 
@@ -28,6 +29,15 @@ public class CharacterTests
         var health = w.Health;
         w.ClassEffects();
         Assert.That(w.Health, Is.EqualTo(health - 1));
+    }
+
+    [Test]
+    public void Check_That_WizardAttack_Is_Doubled()
+    {
+        var mockRng = new Mock<RandomService>();
+        mockRng.Setup(r => r.Next(1, 10)).Returns(10);
+        var w = new Wizard(null, mockRng.Object);
+        Assert.That(w.Attack(), Is.EqualTo(20));
     }
 
     [Test]
