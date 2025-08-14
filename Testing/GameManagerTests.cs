@@ -11,11 +11,11 @@ public class GameManagerTests
     private TestData _data;
     private GameManager _manager;
 
-    private void SetupGameplayLoopMocks()
+    private void SetupGameplayLoopMocks(bool printStatus, LoggingService? logger)
     {
         var mockInput = new Mock<InputService>();
-        mockInput.Setup(i => i.GetInput("[ENTER] to continue")).Returns("");
-        _manager = new GameManager(2, mockInput.Object);
+        mockInput.Setup(i => i.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses")).Returns(printStatus ? "s" : "");
+        _manager = new GameManager(2, mockInput.Object, logger ?? LoggingService.Instance);
 
         _manager.GetType().GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(_manager, new List<Team>
@@ -41,13 +41,13 @@ public class GameManagerTests
     public void Setup()
     {
         _data = new TestData(false);
-        _manager = new GameManager(2, new InputService());
+        _manager = new GameManager(2, new InputService(), LoggingService.Instance);
     }
 
     [Test]
     public void Check_That_GameplayLoop_Correctly_Sorts_Players()
     {
-        SetupGameplayLoopMocks();
+        SetupGameplayLoopMocks(false, null);
         _manager.Loop();
         var sortedPlayers = _manager.GetType()
             .GetField("_sortedPlayers", BindingFlags.NonPublic | BindingFlags.Instance)!
@@ -59,7 +59,7 @@ public class GameManagerTests
     public void Check_That_GameplayLoop_Eventually_Resolves()
     {
         _data = new TestData(true);
-        SetupGameplayLoopMocks();
+        SetupGameplayLoopMocks(false, null);
         for (int i = 0; i < 100; i++)
         {
             if (!_manager.Loop())
@@ -99,7 +99,7 @@ public class GameManagerTests
                 _ => "",
             };
         });
-        _manager = new GameManager(2, mockInput.Object);
+        _manager = new GameManager(2, mockInput.Object, LoggingService.Instance);
         
         // loop should only need to be called 8 times, so this won't test any gameloop code.
         // the 9th call will set _state to GameState.Gameplay

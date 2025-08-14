@@ -12,15 +12,16 @@ public class GameManager
     private int _turnIndex = 0;
     private int? _winningTeam;
     private List<Player>? _sortedPlayers = null;
-    private LoggingService _logger = LoggingService.Instance;
+    private LoggingService _logger;
     private InputService _input;
 
-    public GameManager(int teamCount, InputService input)
+    public GameManager(int teamCount, InputService input, LoggingService logger)
     {
         _state = GameState.TeamCreation;
         _teamCount = teamCount;
         _input = input;
         if (_teamCount <= 0) throw new TeamCountLessThanZeroException();
+        _logger = logger;
     }
 
     private void PrintTeamInfo()
@@ -135,7 +136,7 @@ public class GameManager
     {
         while (true)
         {
-            string opt = _input.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses ");
+            string opt = _input.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses ") ?? "";
             Console.WriteLine();
             if (opt.Trim().Equals("s", StringComparison.CurrentCultureIgnoreCase))
             {
