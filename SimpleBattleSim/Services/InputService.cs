@@ -1,9 +1,9 @@
 ﻿namespace SimpleBattleSim.Services;
 
-public static class InputService
+public class InputService
 {
     private static LoggingService _logger = LoggingService.Instance;
-    public static string GetInput(string question)
+    public virtual string GetInput(string question)
     {
         _logger.Log(question);
         return Console.ReadLine() ?? "";

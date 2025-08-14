@@ -13,11 +13,13 @@ public class GameManager
     private int? _winningTeam;
     private List<Player>? _sortedPlayers = null;
     private LoggingService _logger = LoggingService.Instance;
+    private InputService _input;
 
-    public GameManager(int teamCount)
+    public GameManager(int teamCount, InputService input)
     {
         _state = GameState.TeamCreation;
         _teamCount = teamCount;
+        _input = input;
         if (_teamCount <= 0) throw new TeamCountLessThanZeroException();
     }
 
@@ -83,7 +85,7 @@ public class GameManager
             team.Name = "";
             while (Strings.Trim(team.Name) == "")
             {
-                team.Name = InputService.GetInput($"Please enter a team name for team {team.Idx+1}: ");
+                team.Name = _input.GetInput($"Please enter a team name for team {team.Idx+1}: ");
             }
         }
         else
@@ -91,15 +93,15 @@ public class GameManager
             BaseCharacter? character = null;
             while (character is null)
             {
-                string c = InputService.GetInput(
+                string c = _input.GetInput(
                     $"Team {team.Name} please choose a class for character {team.Players.Count + 1}\n[Wi]zard, [Wa]rrior or [C]leric: ");
                 if (c.Length <= 2)
                 {
                     character = c.PadRight(2, ' ')[..2].ToLower() switch
                     {
-                        "wi" => new Wizard(null),
-                        "wa" => new Warrior(null),
-                        "c " => new Cleric(null),
+                        "wi" => new Wizard(null, new RandomService()),
+                        "wa" => new Warrior(null, new RandomService()),
+                        "c " => new Cleric(null, new RandomService()),
                         _ => null,
                     };
                 }
@@ -107,15 +109,15 @@ public class GameManager
                 {
                     character = c.ToLower() switch
                     {
-                        "wizard" => new Wizard(null),
-                        "warrior" => new Warrior(null),
-                        "cleric" => new Cleric(null),
+                        "wizard" => new Wizard(null, new RandomService()),
+                        "warrior" => new Warrior(null, new RandomService()),
+                        "cleric" => new Cleric(null, new RandomService()),
                         _ => null,
                     };
                 }
             }
 
-            Player p = new Player(character, teamIdx);
+            Player p = new Player(character, teamIdx, new RandomService());
             team.Players.Add(p);
             if(team.Players.Count == 3) Console.WriteLine();
         }
@@ -126,7 +128,7 @@ public class GameManager
     // GameplayLoop makes players attack eachother until a team wins.
     private bool GameplayLoop()
     {
-        _ = InputService.GetInput("[ENTER] to continue");
+        _ = _input.GetInput("[ENTER] to continue");
         Console.WriteLine();
         if (_sortedPlayers is null)
         {

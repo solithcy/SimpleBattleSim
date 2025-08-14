@@ -1,8 +1,10 @@
-﻿namespace SimpleBattleSim.Characters;
+﻿using SimpleBattleSim.Services;
+
+namespace SimpleBattleSim.Characters;
 
 public class Wizard : BaseCharacter
 {
-    public Wizard(string? name) : base(name, "Wizard")
+    public Wizard(string? name, RandomService rng) : base(name, "Wizard", rng)
     {
         
     }

@@ -6,10 +6,11 @@ public abstract class BaseCharacter
 {
     public readonly string Name;
     public readonly string Type;
+    private RandomService _rng;
     public int Health;
-    public readonly int Initiative;
+    public int Initiative { get; init; }
     
-    public BaseCharacter(string? name, string type)
+    public BaseCharacter(string? name, string type, RandomService rng)
     {
         if (name is null or "")
         {
@@ -22,6 +23,7 @@ public abstract class BaseCharacter
         }
 
         Type = type;
+        _rng = rng;
         Initiative = Rand(1, 10);
         Health = Rand(1, 10);
     }
@@ -33,7 +35,7 @@ public abstract class BaseCharacter
 
     public int Rand(int min, int max)
     {
-        return Random.Shared.Next(min, max);
+        return _rng.Next(min, max);
     }
 
     public virtual int Attack()

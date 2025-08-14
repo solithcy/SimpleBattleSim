@@ -1,8 +1,10 @@
-﻿namespace SimpleBattleSim.Characters;
+﻿using SimpleBattleSim.Services;
+
+namespace SimpleBattleSim.Characters;
 
 public class Cleric : BaseCharacter
 {
-    public Cleric(string? name) : base(name, "Cleric")
+    public Cleric(string? name, RandomService rng) : base(name, "Cleric", rng)
     {
         
     }
