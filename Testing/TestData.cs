@@ -23,8 +23,6 @@ internal class TestData
             {
                 return overrides[rngCallIdx++];
             }
-
-            ;
             return defaultRandomBehaviour ? realRng.Next(1, 10) : 0;
         });
         var targetingTypesRng = new Mock<RandomService>();

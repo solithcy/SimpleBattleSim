@@ -9,11 +9,6 @@ public class Cleric : BaseCharacter
         
     }
 
-    public override int Attack()
-    {
-        return base.Attack();
-    }
-
     public override void ClassEffects()
     {
         Health++;

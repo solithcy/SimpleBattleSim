@@ -9,9 +9,9 @@ public class GameManager
     private GameState _state;
     private List<Team> _teams = [];
     private int _teamCount;
-    private int _turnIndex = 0;
+    private int _turnIndex;
     private int? _winningTeam;
-    private List<Player>? _sortedPlayers = null;
+    private List<Player>? _sortedPlayers;
     private LoggingService _logger;
     private InputService _input;
 
@@ -136,7 +136,7 @@ public class GameManager
     {
         while (true)
         {
-            string opt = _input.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses ") ?? "";
+            string opt = _input.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses ");
             Console.WriteLine();
             if (opt.Trim().Equals("s", StringComparison.CurrentCultureIgnoreCase))
             {

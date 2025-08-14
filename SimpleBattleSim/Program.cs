@@ -1,6 +1,8 @@
 ﻿using SimpleBattleSim.Core;
 using SimpleBattleSim.Services;
 
+namespace SimpleBattleSim;
+
 class Program
 {
     public static void Main(string[] args)

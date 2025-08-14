@@ -14,7 +14,7 @@ public class GameManagerTests
     private void SetupGameplayLoopMocks(bool printStatus, LoggingService? logger)
     {
         var mockInput = new Mock<InputService>();
-        mockInput.Setup(i => i.GetInput("[ENTER] to continue, [S + ENTER] to see team statuses")).Returns(printStatus ? "s" : "");
+        mockInput.Setup(i => i.GetInput(It.IsAny<string>())).Returns(printStatus ? "s" : "");
         _manager = new GameManager(2, mockInput.Object, logger ?? LoggingService.Instance);
 
         _manager.GetType().GetField("_teams", BindingFlags.NonPublic | BindingFlags.Instance)!
